@@ -36,7 +36,7 @@ extract_all () {
 
 create_template () {
 
-	find -name \*.flac|sort|cut -c3- > TRACKS.txt
+	find -name \*.flac|sort -V|cut -c3- > TRACKS.txt
 	cp TRACKS.txt TITLE.txt
 	touch ARTIST.txt
 	touch LYRICIST.txt
@@ -45,9 +45,8 @@ create_template () {
 	echo "ALBUM=" >> DISCINFO.txt
 	echo "DATE=" >> DISCINFO.txt
 	echo "LABEL=" >> DISCINFO.txt
-	echo "LABELNO=" >> DISCINFO.txt
+	echo "CATALOGNUMBER=" >> DISCINFO.txt
 	echo "DISCNUMBER=" >> DISCINFO.txt
-	echo "TRACKTOTAL=" >> DISCINFO.txt
 
 }
 
@@ -101,15 +100,8 @@ apply_tracknumber () {
 
         for f in $filelist
         do index=$(( index+1 ))
-
-		if [ "$index" -lt 10 ]; then
-			number="0"$index
-		else
-			number=$index
-		fi
-
 		metaflac --remove-tag=TRACKNUMBER "$f"
-		metaflac --set-tag=TRACKNUMBER="$number" "$f"
+		metaflac --set-tag=TRACKNUMBER="$index" "$f"
 		metaflac --remove-tag=TRACKTOTAL "$f"
 		metaflac --set-tag=TRACKTOTAL="$total" "$f"
         done
@@ -123,7 +115,7 @@ generate_sorted_tracklist () {
 		echo `metaflac --show-tag=TRACKNUMBER $f`:$f >> unsorted_list.txt
 	done
 
-	sort unsorted_list.txt | sed 's/^TRACKNUMBER=.*:..//g' > TRACKS.txt
+	sort -V unsorted_list.txt | sed 's/^TRACKNUMBER=.*:..//g' > TRACKS.txt
 	rm -f unsorted_list.txt
 }
 
@@ -162,7 +154,7 @@ full_pipeline () {
 	apply_disc_field
 
 	#LABELNO
-	FIELD=LABELNO
+	FIELD=CATALOGNUMBER
 	apply_disc_field
 
 	#DISCNUMBER
