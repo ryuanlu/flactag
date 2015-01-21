@@ -107,6 +107,25 @@ apply_tracknumber () {
         done
 }
 
+
+apply_lyrics () {
+        index=0
+
+        filelist=`cat TRACKS.txt`
+
+        for f in $filelist
+        do index=$(( index+1 ))
+                title=`awk "NR==$index" TITLE.txt`
+                metaflac --remove-tag=LYRICS "$f"
+		lyrics=`cat "$title".lyrics 2>/dev/null`
+
+                if [ "$lyrics" != "" ]; then
+                        metaflac --set-tag=LYRICS="$lyrics" "$f"
+                        echo Apply [LYRICS] for \"$f\"
+                fi
+        done
+}
+
 generate_sorted_tracklist () {
 	files=`find -name \*.flac`
 	rm -f unsorted_list.txt
@@ -163,6 +182,8 @@ full_pipeline () {
 
 	#TRACKNUMBER
 	apply_tracknumber
+
+	apply_lyrics
 
 	metaflac --add-replay-gain *.flac
 }
