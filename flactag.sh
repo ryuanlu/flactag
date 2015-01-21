@@ -42,6 +42,8 @@ create_template () {
 	touch LYRICIST.txt
 	touch COMPOSER.txt
 	touch ARRANGER.txt
+
+	rm -f DISCINFO.txt
 	echo "ALBUM=" >> DISCINFO.txt
 	echo "DATE=" >> DISCINFO.txt
 	echo "LABEL=" >> DISCINFO.txt
