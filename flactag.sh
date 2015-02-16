@@ -128,12 +128,29 @@ apply_lyrics () {
         done
 }
 
+rename_by_title () {
+        index=0
+
+        filelist=`cat TRACKS.txt`
+
+        for f in $filelist
+        do index=$(( index+1 ))
+                title=`awk "NR==$index" TITLE.txt`
+
+                if [ "$title" != "" ]; then
+			mv "$f" "$title".flac
+                fi
+        done
+
+}
+
+
 generate_sorted_tracklist () {
 	files=`find -name \*.flac`
 	rm -f unsorted_list.txt
 	for f in $files
 	do
-		echo `metaflac --show-tag=TRACKNUMBER $f`:$f >> unsorted_list.txt
+		echo `metaflac --show-tag=TRACKNUMBER "$f"`:"$f" >> unsorted_list.txt
 	done
 
 	sort -V unsorted_list.txt | sed 's/^TRACKNUMBER=.*:..//g' > TRACKS.txt
@@ -219,6 +236,11 @@ if [ "$1" = "extract" ]; then
 	exit 0;
 fi
 
+if [ "$1" = "rename" ]; then
+	echo Renaming ...
+	rename_by_title
+	exit 0;
+fi
 
 
 exit 0
