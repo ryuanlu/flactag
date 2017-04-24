@@ -1,37 +1,34 @@
 #! /bin/sh
 
 IFS='
-'
+	'
 
 # Functions
 
 
 extract_field () {
 	filelist=`cat TRACKS.txt`
-	rm -f $FIELD.txt
+	rm -f $1.txt
 	for f in $filelist
 	do
-		data=`metaflac --show-tag=$FIELD "$f"`
+		data=`metaflac --show-tag=$1 "$f"`
 		if [ "$data" != "" ]; then
-			metaflac --show-tag=$FIELD "$f" | cut -c`echo $FIELD= |wc -c`- >> $FIELD.txt
+			metaflac --show-tag=$1 "$f" | cut -c`echo $1= |wc -c`- >> $1.txt
 		else
-			echo >> $FIELD.txt
+			echo >> $1.txt
 		fi
 	done
 }
 
 extract_all () {
 	generate_sorted_tracklist
-	FIELD=TITLE
-	extract_field
-	FIELD=ARTIST
-	extract_field
-	FIELD=LYRICIST
-	extract_field
-	FIELD=COMPOSER
-	extract_field
-	FIELD=ARRANGER
-	extract_field
+
+	FIELDS="TITLE	ARTIST	LYRICIST	COMPOSER	ARRANGER"
+
+	for FIELD in $FIELDS
+	do
+		extract_field $FIELD
+	done
 }
 
 create_template () {
@@ -72,25 +69,25 @@ apply_field () {
 
 	for f in $filelist
 	do index=$(( index+1 ))
-		field_data=`awk "NR==$index" $FIELD.txt`
-		metaflac --remove-tag=$FIELD "$f"
+		field_data=`awk "NR==$index" $1.txt`
+		metaflac --remove-tag=$1 "$f"
 
 		if [ "$field_data" != "" ]; then
-			metaflac --set-tag=$FIELD="$field_data" "$f"
+			metaflac --set-tag=$1="$field_data" "$f"
 		else
-			echo Skip [$FIELD] for \"$f\"
+			echo Skip [$1] for \"$f\"
 		fi
 	done
 }
 
 apply_disc_field () {
 	
-	field_name_size=`echo $FIELD=|wc -m`
-	field_data=`grep -F "$FIELD=" DISCINFO.txt| cut -c$field_name_size-`
-	echo "[$FIELD]=\"$field_data\""
+	field_name_size=`echo $1=|wc -m`
+	field_data=`grep -F "$1=" DISCINFO.txt| cut -c$field_name_size-`
+	echo "[$1]=\"$field_data\""
 
 	if [ "$field_data" != "" ]; then
-		find -name \*.flac -exec metaflac --remove-tag=$FIELD {} \; -exec metaflac --set-tag=$FIELD="$field_data" {} \;
+		find -name \*.flac -exec metaflac --remove-tag=$1 {} \; -exec metaflac --set-tag=$1="$field_data" {} \;
 	fi
 }
 
@@ -159,45 +156,20 @@ generate_sorted_tracklist () {
 
 
 full_pipeline () {
-	#TITLE
-	FIELD=TITLE
-	apply_field
 
-	#ARTIST
-	FIELD=ARTIST
-	apply_field
+	metaflac --remove-all *.flac
 
-	#LYRICIST
-	FIELD=LYRICIST
-	apply_field
+	FIELDS="TITLE	ARTIST	LYRICIST	COMPOSER	ARRANGER"
+	for FIELD in $FIELDS
+	do
+		apply_field $FIELD
+	done
 
-	#COMPOSER
-	FIELD=COMPOSER
-	apply_field
-
-	#ARRANGER
-	FIELD=ARRANGER
-	apply_field
-
-	#ALBUM
-	FIELD=ALBUM
-	apply_disc_field
-
-	#DATE
-	FIELD=DATE
-	apply_disc_field
-
-	#LABEL
-	FIELD=LABEL
-	apply_disc_field
-
-	#LABELNO
-	FIELD=CATALOGNUMBER
-	apply_disc_field
-
-	#DISCNUMBER
-	FIELD=DISCNUMBER
-	apply_disc_field
+	FIELDS="ALBUM	DATE	LABEL	CATALOGNUMBER	DISCNUMBER"
+	for FIELD in $FIELDS
+	do
+		apply_disc_field $FIELD
+	done
 
 	#TRACKNUMBER
 	apply_tracknumber
@@ -205,39 +177,40 @@ full_pipeline () {
 	apply_lyrics
 
 	metaflac --add-replay-gain *.flac
+	metaflac --add-seekpoint=10s *.flac
 }
 
 
 
 if [ "$#" -ne 1 ]; then
-	echo Need command:
-	echo 	new, apply, extract
+	echo "Need command:"
+	echo "new, apply, extract, rename"
 	exit 1;
 fi
 
 
 if [ "$1" = "new" ]; then
-	echo Creating templates ...
+	echo "Creating templates ..."
 	create_template
 	exit 0;
 fi
 
 
 if [ "$1" = "apply" ]; then
-	echo Applying ...
+	echo "Applying ..."
 	full_pipeline
 	exit 0;
 fi
 
 if [ "$1" = "extract" ]; then
-	echo Extracting ...
+	echo "Extracting ..."
 	generate_sorted_tracklist
 	extract_all
 	exit 0;
 fi
 
 if [ "$1" = "rename" ]; then
-	echo Renaming ...
+	echo "Renaming ..."
 	rename_by_title
 	exit 0;
 fi
