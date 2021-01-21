@@ -23,7 +23,7 @@ extract_field () {
 extract_all () {
 	generate_sorted_tracklist
 
-	FIELDS="TITLE	ARTIST	LYRICIST	COMPOSER	ARRANGER"
+	FIELDS="TITLE	ARTIST	LYRICIST	COMPOSER	ARRANGER	COMMENT"
 
 	for FIELD in $FIELDS
 	do
@@ -39,6 +39,7 @@ create_template () {
 	touch LYRICIST.txt
 	touch COMPOSER.txt
 	touch ARRANGER.txt
+	touch COMMENT.txt
 
 	rm -f DISCINFO.txt
 	echo "ALBUM=" >> DISCINFO.txt
@@ -159,7 +160,7 @@ full_pipeline () {
 
 	metaflac --remove-all *.flac
 
-	FIELDS="TITLE	ARTIST	LYRICIST	COMPOSER	ARRANGER"
+	FIELDS="TITLE	ARTIST	LYRICIST	COMPOSER	ARRANGER	COMMENT"
 	for FIELD in $FIELDS
 	do
 		apply_field $FIELD
